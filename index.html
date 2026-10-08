@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>党务小博士 · 中建智慧党建智能问答</title>
+  <link rel="icon" type="image/png" href="/static/assets/icons/favicon.png" />
+  <link rel="stylesheet" href="/static/css/style.css?v=20261008login" />
+</head>
+<body>
+
+  <!-- ============ 登录页：账密登录 + 四身份演示账号 ============ -->
+  <div id="login-screen" class="desktop">
+    <div class="desktop-grid"></div>
+
+    <div class="desktop-center">
+      <h1 class="desktop-title">党务小博士</h1>
+      <p class="desktop-sub">中建智慧党建 · RAG 智能问答客服系统</p>
+
+      <!-- 登录表单 -->
+      <form class="login-form" id="login-form" autocomplete="on">
+        <div class="login-row">
+          <label for="login-username">账号</label>
+          <input id="login-username" name="username" placeholder="请输入账号"
+                 autocomplete="username" required />
+        </div>
+        <div class="login-row">
+          <label for="login-password">密码</label>
+          <input id="login-password" name="password" type="password" placeholder="请输入密码"
+                 autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="desktop-cta" id="login-submit">
+          登录
+          <svg viewBox="0 0 24 24" class="cta-arrow" aria-hidden="true"><path d="M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+        </button>
+        <p class="login-error" id="login-error"></p>
+      </form>
+
+      <!-- 四身份演示账密（点击即填入表单） -->
+      <div class="login-hint">
+        <div class="login-hint-title">演示账号 · 点击卡片填入账密，再点"登录"</div>
+        <div class="login-hint-grid">
+          <button type="button" class="hint-card" data-username="member" data-password="party123">
+            <span class="hint-emoji">👤</span>
+            <div class="hint-meta">
+              <div class="hint-role">党员 / 发展对象</div>
+              <div class="hint-cred">member / party123</div>
+            </div>
+          </button>
+          <button type="button" class="hint-card" data-username="worker" data-password="work123">
+            <span class="hint-emoji">📋</span>
+            <div class="hint-meta">
+              <div class="hint-role">党务工作者</div>
+              <div class="hint-cred">worker / work123</div>
+            </div>
+          </button>
+          <button type="button" class="hint-card" data-username="official" data-password="gov123">
+            <span class="hint-emoji">🏛️</span>
+            <div class="hint-meta">
+              <div class="hint-role">机关党委党务干部</div>
+              <div class="hint-cred">official / gov123</div>
+            </div>
+          </button>
+          <button type="button" class="hint-card" data-username="admin" data-password="admin123">
+            <span class="hint-emoji">🛡️</span>
+            <div class="hint-meta">
+              <div class="hint-role">系统管理员</div>
+              <div class="hint-cred">admin / admin123</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <p class="desktop-hint">也可以直接点击桌面上的小博士与我互动</p>
+    </div>
+  </div>
+
+  <!-- ============ 角色弹窗（已登录后切换身份用） ============ -->
+  <div class="modal-mask hidden" id="role-modal">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="role-modal-title">
+      <div class="modal-head">
+        <span class="modal-title" id="role-modal-title">切换身份</span>
+        <button class="modal-close" id="role-modal-close" aria-label="关闭">×</button>
+      </div>
+      <p class="modal-sub">点击下方身份可快速切换（沿用演示令牌）</p>
+      <div class="role-grid" id="role-grid">
+        <button class="role-card" data-token="demo-member">
+          <span class="role-emoji">👤</span><span class="role-name">党员 / 发展对象</span>
+          <span class="role-desc">member / party123</span>
+        </button>
+        <button class="role-card" data-token="demo-worker">
+          <span class="role-emoji">📋</span><span class="role-name">党务工作者</span>
+          <span class="role-desc">worker / work123</span>
+        </button>
+        <button class="role-card" data-token="demo-official">
+          <span class="role-emoji">🏛️</span><span class="role-name">机关党委党务干部</span>
+          <span class="role-desc">official / gov123</span>
+        </button>
+        <button class="role-card" data-token="demo-admin">
+          <span class="role-emoji">🛡️</span><span class="role-name">系统管理员</span>
+          <span class="role-desc">admin / admin123</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 主应用 ============ -->
+  <div id="app" class="app hidden">
+
+    <!-- 顶栏 -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <img class="topbar-logo" src="/static/assets/icons/xiaoboshi-avatar.png" alt="党务小博士" />
+        <span class="topbar-title">党务小博士</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-user" id="topbar-user"></span>
+        <button class="topbar-btn" id="switch-user">切换身份</button>
+        <button class="topbar-close" id="topbar-close" title="退出">×</button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <!-- 侧边栏 -->
+      <aside class="sidebar">
+        <nav class="nav">
+          <button class="nav-item active" data-view="chat">
+            <span class="nav-ico">💬</span><span class="nav-txt">常见问题</span>
+          </button>
+          <button class="nav-item" data-view="kb" id="nav-kb">
+            <span class="nav-ico">📚</span><span class="nav-txt">知识库管理</span>
+          </button>
+          <button class="nav-item" data-view="dashboard">
+            <span class="nav-ico">📊</span><span class="nav-txt">党务看板</span>
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <div class="user-chip">
+            <span class="user-avatar" id="user-avatar"></span>
+            <div class="user-meta">
+              <div class="user-name" id="user-name"></div>
+              <div class="user-role" id="user-role"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 主内容 -->
+      <main class="main">
+
+        <!-- ========== 智能问答 ========== -->
+        <section id="view-chat" class="view active">
+          <div class="service-bar">党务小博士智能机器人为您服务…</div>
+
+          <div class="chat-wrap">
+            <div class="chat-messages" id="chat-messages">
+
+              <!-- 提问规范（固定首条） -->
+              <div class="msg bot">
+                <div class="msg-avatar">
+                  <img class="mascot-img" src="/static/assets/icons/xiaoboshi-avatar.png" alt="党务小博士" />
+                </div>
+                <div class="msg-bubble notice-bubble">
+                  <div class="notice-title">提问规范</div>
+                  <p>1、提问字数应控制在35字以内，描述应完整简明。</p>
+                  <p>2、提问内容尽量避免出现字母、数字、特殊符号等非简体中文内容。</p>
+                  <p>3、提问避免上下文分割，避免多次重复提问同一个问题。</p>
+                </div>
+              </div>
+
+              <!-- 常见问题卡片 -->
+              <div class="faq-card" id="faq-card">
+                <div class="faq-card-head">
+                  <span class="faq-card-title"><i class="slash"></i>常见问题</span>
+                  <button class="faq-refresh" id="faq-refresh">换一批<svg viewBox="0 0 24 24" class="refresh-ico"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+                </div>
+                <div class="faq-card-body" id="suggestions"></div>
+              </div>
+
+            </div>
+
+            <div class="chat-input-bar">
+              <div class="input-box">
+                <textarea id="chat-input" rows="1" maxlength="35" placeholder="请输入问题"></textarea>
+                <div class="input-counter" id="input-counter">您还可以输入35个字</div>
+              </div>
+              <button id="send-btn" class="send-btn">发送</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== 知识库管理 ========== -->
+        <section id="view-kb" class="view">
+          <header class="view-header">
+            <div>
+              <h2>知识库管理</h2>
+              <p class="view-sub">制度文件 · 流程指引 · FAQ 入库与版本管理</p>
+            </div>
+            <button class="btn-primary" id="reindex-btn">重建索引</button>
+          </header>
+
+          <div class="kb-layout">
+            <div class="kb-upload panel">
+              <h3>上传文档</h3>
+              <div class="form-row">
+                <label>文档标题</label>
+                <input id="kb-title" placeholder="例如：发展党员工作细则（2025年修订）" />
+              </div>
+              <div class="form-row">
+                <label>业务类型</label>
+                <select id="kb-biz">
+                  <option>发展党员</option><option>党费收缴</option><option>组织关系转接</option>
+                  <option>三会一课</option><option>民主评议</option><option>党籍党龄</option>
+                  <option>党员权利与义务</option><option>系统操作</option><option>其他</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>文本内容（Markdown / TXT）</label>
+                <textarea id="kb-content" rows="6" placeholder="粘贴文档正文，支持 Markdown（## 章节、### 条款）"></textarea>
+              </div>
+              <div class="form-actions">
+                <button class="btn-primary" id="kb-upload-text">上传文本</button>
+                <label class="btn-ghost file-label">
+                  上传文件<input type="file" id="kb-file" accept=".md,.txt,.docx,.pptx,.pdf" hidden />
+                </label>
+              </div>
+            </div>
+
+            <div class="kb-list panel">
+              <h3>知识文档 <span class="count" id="kb-count"></span></h3>
+              <div class="doc-table" id="doc-table"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ========== 党务看板 ========== -->
+        <section id="view-dashboard" class="view">
+          <header class="view-header">
+            <div>
+              <h2>党务看板</h2>
+              <p class="view-sub">高频问题 · 共性薄弱点 · 培训建议</p>
+            </div>
+          </header>
+
+          <div class="stat-cards" id="stat-cards"></div>
+
+          <div class="dash-grid">
+            <div class="panel">
+              <h3>业务事项咨询热度</h3>
+              <div id="biz-chart" class="bar-chart"></div>
+            </div>
+            <div class="panel">
+              <h3>近 14 天咨询趋势</h3>
+              <div id="trend-chart" class="trend-chart"></div>
+            </div>
+          </div>
+
+          <div class="dash-grid">
+            <div class="panel">
+              <h3>高频咨询问题</h3>
+              <ul class="freq-list" id="freq-list"></ul>
+            </div>
+            <div class="panel">
+              <h3>共性薄弱点 · 培训建议</h3>
+              <div id="training-list"></div>
+            </div>
+          </div>
+
+          <div class="panel faq-panel" id="faq-panel">
+            <h3>常见问题 FAQ 维护</h3>
+            <div class="faq-list" id="faq-list"></div>
+            <div class="faq-add">
+              <input id="faq-q" placeholder="问题" />
+              <input id="faq-a" placeholder="标准答复" />
+              <button class="btn-primary" id="faq-add-btn">新增</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ============ 桌面宠物（全局悬浮：待机页 + 系统内均可用） ============ -->
+  <div class="pet" id="pet" role="button" tabindex="0"
+       aria-label="党务小博士，点击与我互动" title="点击互动，按住可拖动，快速甩动会飞出去">
+    <div class="pet-bubble" id="pet-bubble">
+      <span id="pet-bubble-text">点我就能选择身份哦～</span>
+      <i class="pet-tail"></i>
+    </div>
+    <span class="pet-min" id="pet-min" aria-hidden="true" title="收起小博士">－</span>
+    <div class="pet-shadow"></div>
+
+    <!-- figure 承载身体动画；眼皮与道具置于其内，才能跟随身体一起位移/旋转 -->
+    <div class="pet-figure">
+      <img class="pet-body" src="/static/assets/icons/xiaoboshi.png"
+           alt="党务小博士" draggable="false" />
+
+      <!-- 眼皮：眨眼 / 打盹 / 睡觉（位置由形象图眼睛坐标换算而来） -->
+      <div class="pet-eyes" aria-hidden="true">
+        <i class="eyelid l"></i><i class="eyelid r"></i>
+      </div>
+
+      <!-- 道具：读书 / 敲键盘 -->
+      <div class="pet-prop" aria-hidden="true">
+        <div class="prop-book"></div>
+        <div class="prop-keyboard"></div>
+      </div>
+    </div>
+
+    <!-- 情绪符号（不跟随身体变换） -->
+    <div class="pet-fx" aria-hidden="true">
+      <span class="fx fx-wave">👋</span>
+      <span class="fx fx-sleep">💤</span>
+      <span class="fx fx-angry">💢</span>
+      <span class="fx fx-happy">✨</span>
+      <span class="fx fx-idea">💡</span>
+    </div>
+  </div>
+
+  <!-- 收起后的迷你图标 -->
+  <button class="pet-mini hidden" id="pet-mini" type="button" aria-label="唤出小博士" title="唤出小博士">
+    <img src="/static/assets/icons/xiaoboshi-avatar.png" alt="党务小博士" />
+  </button>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="/static/js/app.js?v=20261008login3"></script>
+</body>
+</html>
